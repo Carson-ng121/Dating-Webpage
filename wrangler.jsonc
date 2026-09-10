@@ -1,0 +1,25 @@
+{
+  // Cloudflare Worker 设定。改动后 push 到 main，Cloudflare 会自动重新部署。
+  "name": "staywithme",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+
+  // 静态页面：public/index.html 是约会邀请页，public/admin.html 是你看结果的页面
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // 存她填的结果。id 要换成你自己的 KV namespace ID：
+  // Cloudflare 后台 → Storage & Databases → KV → Create namespace → 复制 Namespace ID
+  "kv_namespaces": [
+    {
+      "binding": "DATES",
+      "id": "PUT_YOUR_KV_NAMESPACE_ID_HERE"
+    }
+  ]
+
+  // ADMIN_KEY 不要写在这里（这个档案会进 git）。
+  // 到 Cloudflare 后台 → 你的 Worker → Settings → Variables and Secrets
+  // 新增 Secret，名字 ADMIN_KEY，值自己定一串密码。
+}
