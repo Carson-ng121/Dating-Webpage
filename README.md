@@ -35,12 +35,27 @@ Cloudflare 後台 → Storage & Databases → KV → Create namespace（名字�
 > ⚠️ 只有真實有效的 ID 才行。填假值或佔位符會讓 Cloudflare 部署失敗
 > （wrangler 本機不檢查，要上傳到 Cloudflare 才會報錯）。
 
-### 2. 設定管理密碼
+### 2. 設定管理密碼（三選一）
 
-Cloudflare 後台 → 你的 Worker → Settings → Variables and Secrets
-新增一個 **Secret**，名字 `ADMIN_KEY`，值自己定一串密碼。
+**最簡單：存在 KV 裡**（不用 CLI、不用額外產品）
 
-不要寫進 `wrangler.jsonc`，那個檔案會進 git。
+Cloudflare 後台 → Storage & Databases → KV → 進入你的 namespace → 新增一筆：
+
+| Key | Value |
+|---|---|
+| `config:admin_key` | 你自己定的密碼 |
+
+存好即時生效，不用重新部署。`config:` 開頭的記錄不會出現在結果列表裡。
+
+**其他兩種也支援**（`src/index.js` 的 `resolveAdminKey` 會依序嘗試）：
+
+- 名為 `ADMIN_KEY` 的純文字變數，或 `npx wrangler secret put ADMIN_KEY`
+- Secrets Store 綁定，變數名 `ADMIN_KEY`（會用 `await env.ADMIN_KEY.get()` 讀）
+
+優先順序：變數 → Secrets Store → KV。
+
+> 注意：Worker 後台的 **Settings → Builds → Variables and secrets** 是**建置時**的變數，
+> Worker 執行時讀不到，放在那裡沒有用。
 
 ### 3. 開啟網址
 

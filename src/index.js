@@ -3,8 +3,8 @@
 // 需要的绑定（在 wrangler.jsonc 里配置）：
 //   ASSETS —— 静态资源（public/ 目录），自动
 //   DATES  —— KV namespace，存她填的结果
-// 需要的密钥（在 Cloudflare 后台 Settings → Variables and Secrets 设为 Secret）：
-//   ADMIN_KEY —— 你自己定的一串密码，用来查看结果
+// 管理密码（三选一，看 resolveAdminKey）：
+//   最简单：在 DATES 这个 KV 里加一条记录，key = config:admin_key，value = 你的密码
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -60,14 +60,48 @@ async function handleSubmit(request, env) {
   return json({ ok: true });
 }
 
+// 找出管理密码。三种设置方式任选其一，按顺序尝试：
+//   1) 纯文本变量 / wrangler secret put ADMIN_KEY  → env.ADMIN_KEY 是字符串
+//   2) Secrets Store 绑定，变量名 ADMIN_KEY        → env.ADMIN_KEY.get()
+//   3) 退路：KV 里存一条 key 为 config:admin_key 的记录（后台点几下就能加）
+export async function resolveAdminKey(env) {
+  const v = env.ADMIN_KEY;
+
+  if (typeof v === 'string' && v.trim()) return v.trim();
+
+  if (v && typeof v.get === 'function') {
+    try {
+      const s = await v.get();
+      if (typeof s === 'string' && s.trim()) return s.trim();
+    } catch { /* 读不到就往下试 */ }
+  }
+
+  if (env.DATES) {
+    try {
+      const s = await env.DATES.get('config:admin_key');
+      if (typeof s === 'string' && s.trim()) return s.trim();
+    } catch { /* 读不到就当没设 */ }
+  }
+
+  return null;
+}
+
 // GET /api/list —— 你自己看结果，要密码
 async function handleList(request, env) {
   if (!env.DATES) return json({ ok: false, error: 'KV binding "DATES" 未绑定' }, 503);
-  if (!env.ADMIN_KEY) return json({ ok: false, error: '密钥 ADMIN_KEY 未设置' }, 503);
+
+  const adminKey = await resolveAdminKey(env);
+  if (!adminKey) {
+    return json({
+      ok: false,
+      error: '管理密码未设置：在 KV 里加一条 key 为 config:admin_key 的记录，' +
+             '或设一个名为 ADMIN_KEY 的变量／Secrets Store 绑定',
+    }, 503);
+  }
 
   const url = new URL(request.url);
   const provided = request.headers.get('x-admin-key') || url.searchParams.get('key') || '';
-  if (!keyMatches(provided, env.ADMIN_KEY)) {
+  if (!keyMatches(provided, adminKey)) {
     return json({ ok: false, error: '密码不对' }, 401);
   }
 
