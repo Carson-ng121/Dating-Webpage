@@ -1,0 +1,23 @@
+{
+  // Cloudflare Worker 设定。改动后 push 到 main，Cloudflare 会自动重新部署。
+  "name": "staywithme",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+
+  // 静态页面：public/index.html 是约会邀请页，public/admin.html 是看结果的页面
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // 存她填的结果。Namespace ID 不是机密，只是识别码。
+  "kv_namespaces": [
+    {
+      "binding": "DATES",
+      "id": "50b4781a90e741d59f987da393e0af17"
+    }
+  ]
+
+  // 管理密码 ADMIN_KEY 不写在这里（这个档案会进 git）。
+  // 到后台 → 你的 Worker → Settings → Variables and Secrets 新增 Secret。
+}

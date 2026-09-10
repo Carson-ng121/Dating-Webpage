@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "wrangler": "^4.131.0"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "start": "wrangler dev"
+  },
+  "private": true
+}
