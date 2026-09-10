@@ -10,6 +10,7 @@
   --pink:#FF4FA3;          /* 主色：亮粉 */
   --pink-deep:#E91E8C;     /* 深粉：小花 */
   --pink-soft:#FCE4EC;     /* 中间层容器 */
+  --mint:#8FE4C2;          /* 薄荷绿：活动页图标底色 */
   --black:#000;
   --white:#fff;
   --gray:#666;
@@ -129,6 +130,7 @@ body{
 }
 .sticker-inner--red{background:#FF5A5A;}
 .sticker-inner--pink{background:var(--pink);}
+.sticker-inner--mint{background:var(--mint);}
 /* 法斗犬头像占位图：如需换成真实照片，替换下面 .dog 里的 <img>/emoji 即可 */
 .dog{font-size:52px;}
 
@@ -246,6 +248,40 @@ input[type="date"]{min-height:48px;}
   transform:rotate(45deg);
 }
 
+/* ---------- 键盘焦点样式（覆盖浏览器默认橙色描边） ---------- */
+input:focus-visible,select:focus-visible,.opt:focus-visible{
+  outline:3px solid var(--pink);outline-offset:3px;
+}
+.btn:focus-visible{outline:3px solid var(--black);outline-offset:3px;}
+
+/* ---------- 自填活动弹窗（活动页“其他”） ---------- */
+.modal{
+  position:absolute;inset:0;z-index:10;
+  display:none;align-items:center;justify-content:center;
+  padding:24px;
+  background:rgba(252,228,236,.92);
+}
+.modal.show{display:flex;}
+.modal-box{
+  width:100%;max-width:320px;
+  background:var(--white);
+  border:var(--border);
+  border-radius:20px;
+  padding:20px;
+  text-align:center;
+}
+.modal-box h2{font-size:19px;font-weight:800;margin:0 0 14px;}
+.modal-box input{
+  font-family:inherit;font-size:15px;
+  width:100%;padding:12px;
+  background:var(--white);
+  border:var(--border);border-radius:12px;
+  color:var(--black);
+  margin-bottom:14px;
+}
+.modal-actions{display:flex;gap:10px;}
+.modal-actions .btn{flex:1;padding:12px 10px;font-size:15px;}
+
 /* ---------- 确认页汇总卡片 ---------- */
 .summary{
   border:var(--border);
@@ -358,7 +394,7 @@ input[type="date"]{min-height:48px;}
 
     <!-- ==================== Screen 4 — 约会活动选择页 ==================== -->
     <section class="screen" id="screen4">
-      <div class="sticker"><div class="sticker-inner sticker-inner--pink">🎡</div></div>
+      <div class="sticker"><div class="sticker-inner sticker-inner--mint">🎡</div></div>
       <h1 class="title">我们玩点什么？🎡✨</h1>
       <p class="subtitle">挑一个今天的约会活动～</p>
       <div class="grid grid--activity" id="activityGrid"></div>
@@ -391,6 +427,19 @@ input[type="date"]{min-height:48px;}
       </div>
       <div class="hearts"><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span></div>
     </section>
+
+    <!-- 自填活动弹窗：点活动页的“其他 ✍️”时弹出 -->
+    <div class="modal" id="customModal">
+      <div class="modal-box">
+        <h2>你想去哪儿呀？✍️</h2>
+        <label class="label" for="customActivity" style="text-align:center;">自己写一个吧～</label>
+        <input type="text" id="customActivity" maxlength="12" placeholder="比如：看展览" autocomplete="off">
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="customCancel">再想想</button>
+          <button type="button" class="btn btn-primary" id="customOk">就这个 ❤️</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -553,10 +602,10 @@ confirmTimeBtn.addEventListener('click', function(){
 const ACTIVITIES = [
   ['泡温泉','♨️'],['家里做饭','🍳'],['猫咖','🐱'],
   ['脱口秀','🎤'],['海洋馆','🐬'],['做手工','🎨'],
-  ['清吧','🍸'],['春游','🌸'],['KTV','🎵'],
+  ['清吧','🍸'],['秋游','🍁'],['KTV','🎵'],
   ['密室逃脱','🔍'],['游乐园','🎢'],['网吧','🖥️'],
-  ['运动','⚽'],['旅游','✈️'],['私人影院','🎬'],
-  ['台球','🎱']
+  ['运动','⚽'],['看电影','🎬'],['台球','🎱'],
+  ['其他','✍️']                                   // 点它可以自己填活动
 ];
 
 /* ===================== Screen 5 — 美食 ===================== */
@@ -575,15 +624,54 @@ function buildGrid(container, items, onPick){
     el.innerHTML = '<span class="emoji">' + emoji + '</span><span class="text">' + text + '</span>';
     el.addEventListener('click', function(){
       el.classList.add('is-picked');               // 移动端无 hover：先变粉，再延迟跳转
-      setTimeout(() => onPick(text), 200);
+      setTimeout(() => onPick(text, el), 200);
     });
     container.appendChild(el);
   });
 }
 
-buildGrid(document.getElementById('activityGrid'), ACTIVITIES, function(text){
+buildGrid(document.getElementById('activityGrid'), ACTIVITIES, function(text, el){
+  if (text === '其他'){ openCustomModal(el); return; }   // “其他”改为自己填
   state.selectedActivity = text;
   goTo('screen5');
+});
+
+/* ---------- 活动页“其他”：自己填 ---------- */
+const customModal  = document.getElementById('customModal');
+const customInput  = document.getElementById('customActivity');
+let customPickedEl = null;
+
+function openCustomModal(el){
+  customPickedEl = el || null;
+  customInput.value = '';
+  customModal.classList.add('show');
+  customInput.focus();
+}
+
+function closeCustomModal(){
+  customModal.classList.remove('show');
+  if (customPickedEl) customPickedEl.classList.remove('is-picked');  // 取消时还原卡片颜色
+  customPickedEl = null;
+}
+
+function submitCustomActivity(){
+  const v = customInput.value.trim();
+  if (!v){ customInput.focus(); return; }        // 空的就不放行
+  state.selectedActivity = v;
+  customModal.classList.remove('show');
+  if (customPickedEl) customPickedEl.classList.remove('is-picked');
+  customPickedEl = null;
+  goTo('screen5');
+}
+
+document.getElementById('customOk').addEventListener('click', submitCustomActivity);
+document.getElementById('customCancel').addEventListener('click', closeCustomModal);
+customInput.addEventListener('keydown', function(e){
+  if (e.key === 'Enter'){ e.preventDefault(); submitCustomActivity(); }
+  if (e.key === 'Escape'){ closeCustomModal(); }
+});
+customModal.addEventListener('click', function(e){
+  if (e.target === customModal) closeCustomModal();   // 点弹窗外围关闭
 });
 
 buildGrid(document.getElementById('foodGrid'), FOODS, function(text){
