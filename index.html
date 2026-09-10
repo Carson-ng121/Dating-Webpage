@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dating with me~</title>
+<style>
+/* ===================== 全局设计规范 ===================== */
+:root{
+  --pink:#FF4FA3;          /* 主色：亮粉 */
+  --pink-deep:#E91E8C;     /* 深粉：小花 */
+  --pink-soft:#FCE4EC;     /* 中间层容器 */
+  --black:#000;
+  --white:#fff;
+  --gray:#666;
+  --border:3px solid #000;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+html,body{height:100%;}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  color:var(--black);
+  /* 最外层：水平渐变，左淡粉 → 右淡绿 */
+  background:linear-gradient(90deg,#FFE4F0 0%,#FFF0F6 45%,#EFF7EF 70%,#E8F5E9 100%);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px 16px;
+}
+
+/* 中间层：淡粉色大圆角容器 */
+.stage{
+  position:relative;
+  width:100%;
+  max-width:560px;
+  background:var(--pink-soft);
+  border-radius:40px;
+  padding:48px 32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* 内容层：白色卡片 */
+.card{
+  position:relative;
+  z-index:1;
+  width:100%;
+  background:var(--white);
+  border:var(--border);
+  border-radius:24px;
+  padding:32px;
+  text-align:center;
+  overflow:hidden;
+}
+
+/* ---------- 文字层级 ---------- */
+.title{
+  font-size:28px;
+  font-weight:800;
+  line-height:1.35;
+  margin:20px 0 12px;
+  color:var(--black);
+}
+.title--flowers{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.title--flowers .title-text{flex:0 1 auto;}
+.subtitle{
+  font-size:15px;
+  line-height:1.6;
+  color:var(--gray);
+  margin:0 0 24px;
+}
+.label{font-size:14px;font-weight:600;text-align:left;display:block;margin-bottom:8px;}
+
+/* ---------- 按钮 ---------- */
+.btn{
+  font-family:inherit;
+  font-size:16px;
+  font-weight:800;
+  border:var(--border);
+  border-radius:999px;
+  padding:14px 26px;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:transform .1s ease,background-color .15s ease;
+}
+.btn:active{transform:scale(.95);}
+.btn-primary{background:var(--pink);color:var(--white);}
+.btn-secondary{background:var(--white);color:var(--black);}
+.btn-block{width:100%;}
+.btn.is-disabled{background:#D9D9D9;color:#8A8A8A;}
+
+.btn-row{
+  display:flex;
+  gap:16px;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+/* ---------- Sticker 头像 / 图标 ---------- */
+.sticker{position:relative;display:inline-block;}
+.sticker::before{               /* 底层偏移色块，向右下露出 */
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translate(6px,6px);
+  background:var(--pink);
+  border:var(--border);
+  border-radius:16px;
+}
+.sticker--black::before{background:var(--black);}
+.sticker-inner{
+  position:relative;
+  width:96px;height:96px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:46px;line-height:1;
+  background:var(--white);
+  border:var(--border);
+  border-radius:16px;
+  overflow:hidden;
+}
+.sticker-inner--red{background:#FF5A5A;}
+.sticker-inner--pink{background:var(--pink);}
+/* 法斗犬头像占位图：如需换成真实照片，替换下面 .dog 里的 <img>/emoji 即可 */
+.dog{font-size:52px;}
+
+/* 迷你日历图标（日历页显示 17） */
+.mini-cal{
+  width:58px;height:58px;background:#fff;border:2px solid #000;border-radius:8px;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.mini-cal__top{height:16px;background:var(--pink-deep);border-bottom:2px solid #000;}
+.mini-cal__day{flex:1;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;}
+
+/* ---------- 花朵装饰 ---------- */
+.flower-big{font-size:26px;vertical-align:middle;display:inline-block;animation:float 3.5s ease-in-out infinite;}
+.flower-sm{
+  position:absolute;
+  font-size:15px;
+  color:var(--pink-deep);
+  animation:float 3.5s ease-in-out infinite;
+  pointer-events:none;
+  z-index:0;
+}
+.f1{top:14px;left:50%;transform:translateX(-50%);animation-duration:3s;animation-delay:0s;}
+.f2{bottom:16px;left:22px;animation-duration:3.5s;animation-delay:.5s;}
+.f3{bottom:20px;right:24px;animation-duration:4s;animation-delay:1s;}
+.f4{top:46%;left:10px;animation-duration:3.5s;animation-delay:1.5s;}
+.f5{top:36%;right:12px;animation-duration:4s;animation-delay:.8s;}
+.f6{bottom:52px;right:10px;font-size:12px;animation-duration:3s;animation-delay:1.2s;}
+
+@keyframes float{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-4px);}
+}
+.f1{animation-name:floatX;}
+@keyframes floatX{
+  0%,100%{transform:translateX(-50%) translateY(0);}
+  50%{transform:translateX(-50%) translateY(-4px);}
+}
+
+/* ---------- 页面切换动画 ---------- */
+.screen{display:none;}
+.screen.active{display:block;animation:screenIn .35s ease-out both;}
+.screen.active.exit{animation:screenOut .3s ease-in both;}
+@keyframes screenIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes screenOut{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-12px);}}
+
+/* ---------- 表单 ---------- */
+.field{margin-bottom:16px;text-align:left;}
+input[type="date"],select{
+  font-family:inherit;
+  font-size:15px;
+  width:100%;
+  padding:12px;
+  background:var(--white);
+  border:var(--border);
+  border-radius:12px;
+  color:var(--black);
+  appearance:none;
+  -webkit-appearance:none;
+}
+select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='black' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  padding-right:38px;
+}
+input[type="date"]{min-height:48px;}
+
+/* ---------- 选项网格（活动页 / 美食页通用） ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;}
+.grid--activity{gap:10px;}
+.grid--food{gap:12px;}
+.opt{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:var(--white);
+  border:var(--border);
+  cursor:pointer;
+  font-family:inherit;
+  color:var(--black);
+  transition:background-color .15s ease,transform .15s ease;
+}
+.grid--activity .opt{border-radius:14px;padding:12px 6px;}
+.grid--food .opt{border-radius:16px;padding:16px 6px;}
+.opt .emoji{font-size:28px;line-height:1;}
+.grid--food .opt .emoji{font-size:32px;}
+.opt .text{font-size:13px;font-weight:600;}
+.grid--food .opt .text{font-size:14px;}
+.opt:hover,.opt.is-picked{background:var(--pink);transform:translateY(-2px);}
+.opt:active{transform:scale(.95);}
+
+/* ---------- “不要”按钮 & 气泡 ---------- */
+#noBtn.is-loose{position:absolute;transition:left .2s ease,top .2s ease,transform .1s ease;z-index:5;}
+.no-placeholder{visibility:hidden;display:inline-block;}
+.bubble{
+  position:absolute;
+  z-index:6;
+  background:var(--white);
+  border:var(--border);
+  border-radius:14px;
+  padding:8px 12px;
+  font-size:13px;font-weight:700;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .25s ease;
+}
+.bubble.show{opacity:1;}
+.bubble::after{                 /* 指向按钮的小三角 */
+  content:"";
+  position:absolute;
+  left:16px;bottom:-9px;
+  width:12px;height:12px;
+  background:var(--white);
+  border-right:var(--border);
+  border-bottom:var(--border);
+  transform:rotate(45deg);
+}
+
+/* ---------- 确认页汇总卡片 ---------- */
+.summary{
+  border:var(--border);
+  border-radius:16px;
+  background:var(--white);
+  padding:16px;
+  display:flex;flex-direction:column;gap:10px;
+  text-align:left;
+}
+.summary-row{display:flex;gap:10px;}
+.box{
+  flex:1;
+  background:var(--white);
+  border:2px solid var(--black);
+  border-radius:10px;
+  padding:10px;
+}
+.box .k{font-size:12px;font-weight:800;color:var(--pink);text-transform:uppercase;letter-spacing:.06em;}
+.box .v{font-size:16px;font-weight:800;margin-top:4px;}
+.box--half{flex:0 0 calc(50% - 5px);}
+.hearts{margin-top:16px;display:flex;justify-content:center;gap:12px;font-size:16px;}
+.hearts span{animation:float 3s ease-in-out infinite;}
+.hearts span:nth-child(2){animation-delay:.3s;}
+.hearts span:nth-child(3){animation-delay:.6s;}
+.hearts span:nth-child(4){animation-delay:.9s;}
+.hearts span:nth-child(5){animation-delay:1.2s;}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:480px){
+  body{padding:12px 8px;}
+  .stage{padding:34px 16px;border-radius:32px;}
+  .card{padding:24px 18px;}
+  .title{font-size:24px;}
+  .title--flowers{font-size:22px;gap:6px;}
+  .flower-big{font-size:22px;}
+  .subtitle{font-size:14px;}
+  .btn{font-size:15px;padding:13px 20px;}
+  .no-placeholder{font-size:15px;padding:13px 20px;}
+  .opt .emoji{font-size:24px;}
+  .grid--food .opt .emoji{font-size:26px;}
+  .opt .text{font-size:12px;}
+  .grid--food .opt .text{font-size:12px;}
+  .sticker-inner{width:82px;height:82px;font-size:40px;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <!-- 小花装饰（浮动动画） -->
+  <div class="flower-sm f1">✿</div>
+  <div class="flower-sm f2">✿</div>
+  <div class="flower-sm f3">✿</div>
+  <div class="flower-sm f4">✿</div>
+  <div class="flower-sm f5">✿</div>
+  <div class="flower-sm f6">✿</div>
+
+  <div class="card" id="card">
+
+    <!-- ==================== Screen 1 — 约会邀请页 ==================== -->
+    <section class="screen active" id="screen1" style="min-height:360px;">
+      <!-- 法斗犬头像占位图：替换此处 emoji 为 <img src="dog.jpg" alt="法斗"> 即可 -->
+      <div class="sticker"><div class="sticker-inner"><span class="dog">🐶</span></div></div>
+      <h1 class="title title--flowers"><span class="flower-big">🌸</span><span class="title-text">可以和我一起约会嘛？！</span><span class="flower-big" style="animation-delay:1s">🌸</span></h1>
+      <p class="subtitle">系统检测到：对方已经紧张到开始写网页了。</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="yesBtn">愿意 ❤️</button>
+        <!-- “不要”按钮：首次躲避前在正常流中，之后转为 absolute 自由移动 -->
+        <button class="btn btn-secondary" id="noBtn">不要 👋</button>
+        <!-- 占位元素：按钮跑走后撑住布局，避免卡片跳动 -->
+        <span class="no-placeholder" id="noPlaceholder" hidden>不要 👋</span>
+      </div>
+      <div class="bubble" id="bubble">点不到吧 😏</div>
+    </section>
+
+    <!-- ==================== Screen 2 — 惊喜反应页 ==================== -->
+    <section class="screen" id="screen2">
+      <div class="sticker sticker--black"><div class="sticker-inner sticker-inner--red">🥜</div></div>
+      <h1 class="title">等下，你真的点了愿意？？😭</h1>
+      <p class="subtitle">我都已经准备好被你点“不要”了。</p>
+      <div class="btn-row"><button class="btn btn-primary" id="okBtn">好啦好啦 →</button></div>
+    </section>
+
+    <!-- ==================== Screen 3 — 时间选择页 ==================== -->
+    <section class="screen" id="screen3">
+      <div class="sticker"><div class="sticker-inner sticker-inner--pink">
+        <!-- 日历图标：日历页显示 17（如需 emoji 可替换为 📅） -->
+        <div class="mini-cal"><div class="mini-cal__top"></div><div class="mini-cal__day">17</div></div>
+      </div></div>
+      <h1 class="title">所以…你什么时候有空？😏</h1>
+      <div class="field">
+        <label class="label" for="dateInput">选一天 📅</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="field">
+        <label class="label" for="timeSelect">几点见？⏰</label>
+        <select id="timeSelect">
+          <option value="">选择时间...</option>
+          <option>12:00</option><option>12:30</option><option>13:00</option><option>13:30</option>
+          <option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option>
+          <option>18:00</option><option>19:00</option><option>20:00</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block is-disabled" id="confirmTimeBtn">确定时间 ❤️</button>
+    </section>
+
+    <!-- ==================== Screen 4 — 约会活动选择页 ==================== -->
+    <section class="screen" id="screen4">
+      <div class="sticker"><div class="sticker-inner sticker-inner--pink">🎡</div></div>
+      <h1 class="title">我们玩点什么？🎡✨</h1>
+      <p class="subtitle">挑一个今天的约会活动～</p>
+      <div class="grid grid--activity" id="activityGrid"></div>
+    </section>
+
+    <!-- ==================== Screen 5 — 美食选择页 ==================== -->
+    <section class="screen" id="screen5">
+      <h1 class="title">我们吃点什么？🍽️✨</h1>
+      <p class="subtitle">挑一个今天的约会氛围。</p>
+      <div class="grid grid--food" id="foodGrid"></div>
+    </section>
+
+    <!-- ==================== Screen 6 — 确认页 ==================== -->
+    <section class="screen" id="screen6">
+      <!-- 法斗犬头像占位图（同 Screen 1） -->
+      <div class="sticker"><div class="sticker-inner"><span class="dog">🐶</span></div></div>
+      <h1 class="title">真开心你没有拒绝～<br>我会准时来接你！</h1>
+      <p class="subtitle" id="finalLine"></p>
+      <div class="summary">
+        <div class="summary-row">
+          <div class="box"><div class="k">Date</div><div class="v" id="sumDate">—</div></div>
+          <div class="box"><div class="k">Time</div><div class="v" id="sumTime">—</div></div>
+        </div>
+        <div class="summary-row">
+          <div class="box"><div class="k">Activity</div><div class="v" id="sumActivity">—</div></div>
+        </div>
+        <div class="summary-row">
+          <div class="box box--half"><div class="k">Menu</div><div class="v" id="sumFood">—</div></div>
+        </div>
+      </div>
+      <div class="hearts"><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ===================== 数据状态管理 ===================== */
+const state = {
+  selectedDate: null,     // "2026-07-12"
+  selectedTime: null,     // "17:00"
+  selectedActivity: null, // "猫咖"
+  selectedFood: null,     // "火锅"
+  noButtonClicks: 0       // “不要”按钮躲避次数
+};
+
+const NO_TEXTS = ["不要 👋", "no 🐾", "不要哇 🙀", "再想想嘛 🥺"];
+
+/* ===================== 页面切换 ===================== */
+let switching = false;
+function goTo(id){
+  if (switching) return;
+  const cur = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!cur || !next || cur === next) return;
+  switching = true;
+  cur.classList.add('exit');                       // 退出：淡出 + 上移 300ms
+  setTimeout(() => {
+    cur.classList.remove('active','exit');
+    next.classList.add('active');                  // 进入：淡入 + 上滑 350ms
+    switching = false;
+  }, 300);
+}
+
+/* ===================== Screen 1 — “不要”按钮躲避 ===================== */
+const card = document.getElementById('card');
+const noBtn = document.getElementById('noBtn');
+const noPlaceholder = document.getElementById('noPlaceholder');
+const bubble = document.getElementById('bubble');
+let hasDodged = false;
+let bubbleTimer = null;
+
+// 把元素移动到指定的“页面坐标”。
+// 注意：screen 的进入动画带 transform（fill:both 会保留），会使 screen 成为绝对定位的包含块，
+// 所以这里统一按 offsetParent 换算，避免定位基准出错。
+function moveTo(el, pageX, pageY){
+  const op = el.offsetParent || document.body;
+  const r = op.getBoundingClientRect();
+  const cs = getComputedStyle(op);
+  el.style.left = (pageX - r.left - parseFloat(cs.borderLeftWidth || 0)) + 'px';
+  el.style.top  = (pageY - r.top  - parseFloat(cs.borderTopWidth  || 0)) + 'px';
+}
+
+// 卡片内可用区域（页面坐标），已扣掉边框与内边距
+function cardBox(){
+  const c = card.getBoundingClientRect();
+  const bw = parseFloat(getComputedStyle(card).borderTopWidth) || 0;
+  const pad = 12;
+  return { x0:c.left + bw + pad, y0:c.top + bw + pad, x1:c.right - bw - pad, y1:c.bottom - bw - pad };
+}
+
+// 首次躲避：把按钮从正常流里拿出来，并用占位元素撑住原有布局
+function detachNoBtn(){
+  const b = noBtn.getBoundingClientRect();
+  noPlaceholder.hidden = false;
+  noPlaceholder.style.width  = b.width + 'px';
+  noPlaceholder.style.height = b.height + 'px';
+  noBtn.classList.add('is-loose');
+  moveTo(noBtn, b.left, b.top);
+}
+
+function dodge(){
+  if (!hasDodged) detachNoBtn();
+
+  // 先更新文字（文案循环），再测量尺寸，避免用旧尺寸算边界
+  state.noButtonClicks += 1;
+  noBtn.textContent = NO_TEXTS[state.noButtonClicks % NO_TEXTS.length];
+
+  const box = cardBox();
+  const b = noBtn.getBoundingClientRect();
+  const maxX = Math.max(box.x0, box.x1 - b.width);
+  const maxY = Math.max(box.y0, box.y1 - b.height);
+
+  // 随机新位置：不超出卡片、离当前位置有明显距离，且不挡住“愿意”按钮
+  const yes = document.getElementById('yesBtn').getBoundingClientRect();
+  const m = 8;
+  let x = b.left, y = b.top;
+  for (let i = 0; i < 30; i++){
+    x = box.x0 + Math.random() * (maxX - box.x0);
+    y = box.y0 + Math.random() * (maxY - box.y0);
+    const overlapsYes = x < yes.right + m && x + b.width  > yes.left - m &&
+                        y < yes.bottom + m && y + b.height > yes.top  - m;
+    const farEnough = Math.hypot(x - b.left, y - b.top) > Math.min(90, (box.x1 - box.x0) * 0.35);
+    if (!overlapsYes && farEnough) break;
+  }
+  moveTo(noBtn, x, y);
+  showBubble(x, y, b.width, b.height);
+  hasDodged = true;
+}
+
+// 气泡提示：定位在按钮右上方，2 秒后淡出
+function showBubble(x, y, btnW, btnH){
+  const box = cardBox();
+  bubble.style.visibility = 'hidden';
+  bubble.classList.add('show');
+  const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+  let bx = x + btnW - 24;
+  let by = y - bh - 12;
+  bx = Math.max(box.x0, Math.min(bx, box.x1 - bw));
+  if (by < box.y0) by = y + btnH + 12;             // 顶部放不下时移到按钮下方
+  moveTo(bubble, bx, by);
+  bubble.style.visibility = 'visible';
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 2000);
+}
+
+// 防止 mouseenter/mouseover/click 在一次靠近中重复触发
+let lastDodge = 0;
+function tryDodge(){
+  const now = Date.now();
+  if (now - lastDodge < 250) return;
+  lastDodge = now;
+  dodge();
+}
+// 桌面端：鼠标靠近就跑
+noBtn.addEventListener('mouseenter', tryDodge);
+noBtn.addEventListener('mouseover', tryDodge);
+// 移动端：touchstart 先移动再阻止 click
+noBtn.addEventListener('touchstart', function(e){ e.preventDefault(); tryDodge(); }, {passive:false});
+// 兜底：永远点不到
+noBtn.addEventListener('click', function(e){ e.preventDefault(); tryDodge(); });
+
+document.getElementById('yesBtn').addEventListener('click', () => goTo('screen2'));
+
+/* ===================== Screen 2 ===================== */
+document.getElementById('okBtn').addEventListener('click', () => goTo('screen3'));
+
+/* ===================== Screen 3 — 时间选择 ===================== */
+const dateInput = document.getElementById('dateInput');
+const timeSelect = document.getElementById('timeSelect');
+const confirmTimeBtn = document.getElementById('confirmTimeBtn');
+
+function refreshTimeBtn(){
+  const ok = !!dateInput.value && !!timeSelect.value;
+  confirmTimeBtn.classList.toggle('is-disabled', !ok);
+}
+dateInput.addEventListener('change', refreshTimeBtn);
+dateInput.addEventListener('input', refreshTimeBtn);
+timeSelect.addEventListener('change', refreshTimeBtn);
+
+confirmTimeBtn.addEventListener('click', function(){
+  if (!dateInput.value || !timeSelect.value){
+    alert('先选好日期和时间嘛～ 🥺');
+    return;
+  }
+  state.selectedDate = dateInput.value;
+  state.selectedTime = timeSelect.value;
+  goTo('screen4');
+});
+
+/* ===================== Screen 4 — 约会活动 ===================== */
+const ACTIVITIES = [
+  ['泡温泉','♨️'],['家里做饭','🍳'],['猫咖','🐱'],
+  ['脱口秀','🎤'],['海洋馆','🐬'],['做手工','🎨'],
+  ['清吧','🍸'],['春游','🌸'],['KTV','🎵'],
+  ['密室逃脱','🔍'],['游乐园','🎢'],['网吧','🖥️'],
+  ['运动','⚽'],['旅游','✈️'],['私人影院','🎬'],
+  ['台球','🎱']
+];
+
+/* ===================== Screen 5 — 美食 ===================== */
+const FOODS = [
+  ['披萨','🍕'],['寿司','🍣'],['火锅','🍲'],
+  ['烤肉','🥩'],['早茶','🥟'],['拉面','🍜'],
+  ['麻辣烫','🌶️'],['小龙虾','🦞'],['烧烤','🍢'],
+  ['其他','✍️']
+];
+
+function buildGrid(container, items, onPick){
+  items.forEach(([text, emoji]) => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'opt';
+    el.innerHTML = '<span class="emoji">' + emoji + '</span><span class="text">' + text + '</span>';
+    el.addEventListener('click', function(){
+      el.classList.add('is-picked');               // 移动端无 hover：先变粉，再延迟跳转
+      setTimeout(() => onPick(text), 200);
+    });
+    container.appendChild(el);
+  });
+}
+
+buildGrid(document.getElementById('activityGrid'), ACTIVITIES, function(text){
+  state.selectedActivity = text;
+  goTo('screen5');
+});
+
+buildGrid(document.getElementById('foodGrid'), FOODS, function(text){
+  state.selectedFood = text;
+  renderFinal();
+  goTo('screen6');
+});
+
+/* ===================== Screen 6 — 确认页 ===================== */
+function formatDate(iso){                          // "2026-07-12" → "7月12日"
+  if (!iso) return '';
+  const parts = iso.split('-');
+  return parseInt(parts[1],10) + '月' + parseInt(parts[2],10) + '日';
+}
+
+function renderFinal(){
+  const d = formatDate(state.selectedDate);
+  const t = state.selectedTime || '';
+  const a = state.selectedActivity || '';
+  const f = state.selectedFood || '';
+  document.getElementById('finalLine').textContent =
+    d + ' ' + t + '，我们先去' + a + '，再去吃' + f + '。带好胃口，我带好路线。';
+  document.getElementById('sumDate').textContent = d;
+  document.getElementById('sumTime').textContent = t;
+  document.getElementById('sumActivity').textContent = a;
+  document.getElementById('sumFood').textContent = f;
+}
+</script>
+</body>
+</html>
