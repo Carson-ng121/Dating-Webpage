@@ -23,9 +23,17 @@ wrangler.jsonc      Cloudflare Worker 設定
 ### 1. 建立 KV namespace，把 ID 填進設定
 
 Cloudflare 後台 → Storage & Databases → KV → Create namespace（名字隨意），
-複製 **Namespace ID**，貼到 `wrangler.jsonc` 裡取代 `PUT_YOUR_KV_NAMESPACE_ID_HERE`。
+複製 **Namespace ID**，然後打開 `wrangler.jsonc`，把註解掉的那段取消註解並填入：
 
-> ⚠️ 沒填就 push 的話，部署會失敗。
+```jsonc
+"assets": { ... },
+"kv_namespaces": [
+  { "binding": "DATES", "id": "你的32位KVNamespaceID" }
+]
+```
+
+> ⚠️ 只有真實有效的 ID 才行。填假值或佔位符會讓 Cloudflare 部署失敗
+> （wrangler 本機不檢查，要上傳到 Cloudflare 才會報錯）。
 
 ### 2. 設定管理密碼
 
