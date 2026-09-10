@@ -8,24 +8,16 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
-  }
+  },
 
-  // ── 想开启「自动收集她填的结果」时，做这两件事 ──────────────────
-  //
-  // 1) 建 KV namespace：
-  //    Cloudflare 后台 → Storage & Databases → KV → Create namespace
-  //    复制 Namespace ID，然后把下面这段取消注释，把 id 换成你的：
-  //
-  //    "kv_namespaces": [
-  //      { "binding": "DATES", "id": "你的32位KVNamespaceID" }
-  //    ]
-  //
-  //    （注意：上面 "assets" 那个大括号后面要补一个逗号）
-  //
-  // 2) 设管理密码：
-  //    后台 → 你的 Worker → Settings → Variables and Secrets
-  //    新增 Secret，名字 ADMIN_KEY，值自己定。
-  //    别写在这个档案里，它会进 git。
-  //
-  // 没做这两步也没关系：网页照常运作，只是 /api/* 会回 503，结果不会被保存。
+  // 存她填的结果。Namespace ID 不是机密，只是识别码。
+  "kv_namespaces": [
+    {
+      "binding": "DATES",
+      "id": "50b4781a90e741d59f987da393e0af17"
+    }
+  ]
+
+  // 管理密码 ADMIN_KEY 不写在这里（这个档案会进 git）。
+  // 到后台 → 你的 Worker → Settings → Variables and Secrets 新增 Secret。
 }
