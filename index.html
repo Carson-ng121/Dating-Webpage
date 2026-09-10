@@ -687,6 +687,28 @@ function formatDate(iso){                          // "2026-07-12" → "7月12�
   return parseInt(parts[1],10) + '月' + parseInt(parts[2],10) + '日';
 }
 
+/* ---------- 把结果回传给我（Cloudflare Pages Function + KV） ---------- */
+// 「发了就不管」：本地双击打开、或还没部署后端时会失败，静默忽略，绝不影响页面。
+let hasReported = false;
+function reportResult(){
+  if (hasReported) return;
+  hasReported = true;
+  try {
+    fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: state.selectedDate,
+        time: state.selectedTime,
+        activity: state.selectedActivity,
+        food: state.selectedFood,
+        dodges: state.noButtonClicks      // 她躲了几次“不要”，纯属好玩
+      }),
+      keepalive: true                     // 她马上关页面也尽量发得出去
+    }).catch(function(){ /* 静默失败 */ });
+  } catch (e) { /* 静默失败 */ }
+}
+
 function renderFinal(){
   const d = formatDate(state.selectedDate);
   const t = state.selectedTime || '';
@@ -698,6 +720,7 @@ function renderFinal(){
   document.getElementById('sumTime').textContent = t;
   document.getElementById('sumActivity').textContent = a;
   document.getElementById('sumFood').textContent = f;
+  reportResult();
 }
 </script>
 </body>
