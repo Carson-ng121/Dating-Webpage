@@ -10,7 +10,7 @@
 ## 專案結構
 
 ```
-public/index.html   約會邀請頁（雙擊即可在瀏覽器打開）
+public/index.html   約會邀請頁（雙擊即可在瀏覽器打開）；日期與活動皆可多選
 public/admin.html   你看結果的頁面
 src/index.js        Worker：處理 /api/submit 與 /api/list，其餘交給靜態資源
 wrangler.jsonc      Cloudflare Worker 設定

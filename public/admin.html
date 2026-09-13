@@ -81,17 +81,28 @@ async function load(){
     }
     $('msg').className = 'msg';
     $('msg').textContent = '共 ' + data.count + ' 条';
-    $('results').innerHTML = data.items.map(it => `
+    $('results').innerHTML = data.items.map(it => {
+      // 新版是数组（dates / activities），旧记录是单个值（date / activity）
+      const list = (arr, one) => {
+        const a = Array.isArray(arr) ? arr : (one ? [one] : []);
+        return a.length ? a.map(esc).join('、') : '—';
+      };
+      const dates = list(it.dates, it.date);
+      const acts  = list(it.activities, it.activity);
+      const nDates = Array.isArray(it.dates) ? it.dates.length : (it.date ? 1 : 0);
+      const nActs  = Array.isArray(it.activities) ? it.activities.length : (it.activity ? 1 : 0);
+      return `
       <div class="card">
         <div class="when">${esc(it.at)}${it.country ? ' · ' + esc(it.country) : ''}</div>
         <div class="grid">
-          <div class="box"><div class="k">Date</div><div class="v">${esc(it.date)}</div></div>
-          <div class="box"><div class="k">Time</div><div class="v">${esc(it.time)}</div></div>
-          <div class="box box--wide"><div class="k">Activity</div><div class="v">${esc(it.activity)}</div></div>
+          <div class="box box--wide"><div class="k">Date${nDates > 1 ? ' · ' + nDates + ' 天' : ''}</div><div class="v">${dates}</div></div>
+          <div class="box box--wide"><div class="k">Time</div><div class="v">${esc(it.time)}</div></div>
+          <div class="box box--wide"><div class="k">Activity${nActs > 1 ? ' · ' + nActs + ' 个' : ''}</div><div class="v">${acts}</div></div>
           <div class="box box--wide"><div class="k">Menu</div><div class="v">${esc(it.food)}</div></div>
         </div>
         ${it.dodges ? '<div class="dodges">她躲了 ' + esc(it.dodges) + ' 次「不要」😏</div>' : ''}
-      </div>`).join('');
+      </div>`;
+    }).join('');
     if (!data.count) $('results').innerHTML = '<div class="card">还没有人填过。</div>';
   } catch (e){
     $('msg').className = 'msg err';

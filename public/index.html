@@ -199,11 +199,34 @@ select{
 }
 input[type="date"]{min-height:48px;}
 
+/* ---------- 日期多选：输入行 + 已选标签 ---------- */
+.date-row{display:flex;gap:10px;align-items:stretch;}
+.date-row input[type="date"]{flex:1;min-width:0;}
+.btn-add{flex:0 0 auto;padding:12px 18px;font-size:15px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--pink);color:var(--white);
+  border:var(--border);border-radius:999px;
+  padding:7px 8px 7px 14px;
+  font-size:14px;font-weight:800;
+}
+.chip button{
+  all:unset;cursor:pointer;
+  width:20px;height:20px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--white);color:var(--black);
+  font-size:13px;font-weight:800;line-height:1;
+}
+.chip button:focus-visible{outline:2px solid var(--black);outline-offset:2px;}
+.hint{font-size:13px;color:var(--gray);margin:10px 0 0;}
+
 /* ---------- 选项网格（活动页 / 美食页通用） ---------- */
 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;}
 .grid--activity{gap:10px;}
 .grid--food{gap:12px;}
 .opt{
+  position:relative;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
   background:var(--white);
   border:var(--border);
@@ -219,6 +242,12 @@ input[type="date"]{min-height:48px;}
 .opt .text{font-size:13px;font-weight:600;}
 .grid--food .opt .text{font-size:14px;}
 .opt:hover,.opt.is-picked{background:var(--pink);transform:translateY(-2px);}
+.opt.is-picked::after{            /* 只有真的选中才打勾，hover 不打 */
+  content:"✓";
+  position:absolute;top:3px;right:6px;
+  font-size:13px;font-weight:800;color:var(--white);
+  text-shadow:0 0 2px rgba(0,0,0,.45);
+}
 .opt:active{transform:scale(.95);}
 
 /* ---------- “不要”按钮 & 气泡 ---------- */
@@ -293,6 +322,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
   text-align:left;
 }
 .summary-row{display:flex;gap:10px;}
+.summary-row.stack{flex-direction:column;}   /* 日期多的时候上下排，别挤在半宽格子里 */
 .box{
   flex:1;
   background:var(--white);
@@ -378,8 +408,12 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
       </div></div>
       <h1 class="title">所以…你什么时候有空？😏</h1>
       <div class="field">
-        <label class="label" for="dateInput">选一天 📅</label>
-        <input type="date" id="dateInput">
+        <label class="label" for="dateInput">选哪几天？📅 可以多选</label>
+        <div class="date-row">
+          <input type="date" id="dateInput">
+          <button type="button" class="btn btn-primary btn-add" id="addDateBtn">加上 +</button>
+        </div>
+        <div class="chips" id="dateChips"></div>
       </div>
       <div class="field">
         <label class="label" for="timeSelect">几点见？⏰</label>
@@ -397,8 +431,11 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
     <section class="screen" id="screen4">
       <div class="sticker"><div class="sticker-inner sticker-inner--mint">🎡</div></div>
       <h1 class="title">我们玩点什么？🎡✨</h1>
-      <p class="subtitle">挑一个今天的约会活动～</p>
+      <p class="subtitle">挑感兴趣的活动</p>
       <div class="grid grid--activity" id="activityGrid"></div>
+      <div class="chips" id="activityChips"></div>
+      <p class="hint" id="activityHint">还没选哦～</p>
+      <button class="btn btn-primary btn-block is-disabled" id="confirmActivityBtn" style="margin-top:14px;">就这些 ❤️</button>
     </section>
 
     <!-- ==================== Screen 5 — 美食选择页 ==================== -->
@@ -415,7 +452,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
       <h1 class="title">真开心你没有拒绝～<br>我会准时来接你！</h1>
       <p class="subtitle" id="finalLine"></p>
       <div class="summary">
-        <div class="summary-row">
+        <div class="summary-row" id="sumTopRow">
           <div class="box"><div class="k">Date</div><div class="v" id="sumDate">—</div></div>
           <div class="box"><div class="k">Time</div><div class="v" id="sumTime">—</div></div>
         </div>
@@ -448,9 +485,9 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
 <script>
 /* ===================== 数据状态管理 ===================== */
 const state = {
-  selectedDate: null,     // "2026-07-12"
+  selectedDates: [],      // ["2026-09-13","2026-09-20"]，可多选
   selectedTime: null,     // "17:00"
-  selectedActivity: null, // "猫咖"
+  selectedActivities: [], // ["猫咖","滑雪"]，可多选
   selectedFood: null,     // "火锅"
   noButtonClicks: 0       // “不要”按钮躲避次数
 };
@@ -578,35 +615,73 @@ document.getElementById('okBtn').addEventListener('click', () => goTo('screen3')
 
 /* ===================== Screen 3 — 时间选择 ===================== */
 const dateInput = document.getElementById('dateInput');
+const addDateBtn = document.getElementById('addDateBtn');
+const dateChips = document.getElementById('dateChips');
 const timeSelect = document.getElementById('timeSelect');
 const confirmTimeBtn = document.getElementById('confirmTimeBtn');
 
 function refreshTimeBtn(){
-  const ok = !!dateInput.value && !!timeSelect.value;
+  const ok = state.selectedDates.length > 0 && !!timeSelect.value;
   confirmTimeBtn.classList.toggle('is-disabled', !ok);
 }
-dateInput.addEventListener('change', refreshTimeBtn);
-dateInput.addEventListener('input', refreshTimeBtn);
+
+// 画出已选日期的标签，每个都能单独删掉
+function renderDateChips(){
+  dateChips.textContent = '';
+  state.selectedDates.forEach(function(iso){
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    const label = document.createElement('span');
+    label.textContent = formatDate(iso);
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.textContent = '×';
+    del.setAttribute('aria-label', '删掉 ' + formatDate(iso));
+    del.addEventListener('click', function(){
+      state.selectedDates = state.selectedDates.filter(function(d){ return d !== iso; });
+      renderDateChips();
+      refreshTimeBtn();
+    });
+    chip.appendChild(label);
+    chip.appendChild(del);
+    dateChips.appendChild(chip);
+  });
+  refreshTimeBtn();
+}
+
+function addDate(){
+  const v = dateInput.value;
+  if (!v){ alert('先选一天嘛～ 🥺'); return; }
+  if (state.selectedDates.indexOf(v) === -1){
+    state.selectedDates.push(v);
+    state.selectedDates.sort();                  // ISO 格式直接字典序排就是时间顺序
+    renderDateChips();
+  }
+  dateInput.value = '';                          // 清空，方便接着加下一天
+}
+
+addDateBtn.addEventListener('click', addDate);
 timeSelect.addEventListener('change', refreshTimeBtn);
 
 confirmTimeBtn.addEventListener('click', function(){
-  if (!dateInput.value || !timeSelect.value){
+  // 已经选了日期但忘了按「加上」，就帮她加进去
+  if (dateInput.value) addDate();
+  if (state.selectedDates.length === 0 || !timeSelect.value){
     alert('先选好日期和时间嘛～ 🥺');
     return;
   }
-  state.selectedDate = dateInput.value;
   state.selectedTime = timeSelect.value;
   goTo('screen4');
 });
 
 /* ===================== Screen 4 — 约会活动 ===================== */
 const ACTIVITIES = [
-  ['泡温泉','♨️'],['家里做饭','🍳'],['猫咖','🐱'],
-  ['脱口秀','🎤'],['海洋馆','🐬'],['做手工','🎨'],
-  ['清吧','🍸'],['秋游','🍁'],['KTV','🎵'],
-  ['密室逃脱','🔍'],['游乐园','🎢'],['网吧','🖥️'],
-  ['运动','⚽'],['看电影','🎬'],['台球','🎱'],
-  ['其他','✍️']                                   // 点它可以自己填活动
+  ['泡温泉','♨️'],['猫咖','🐱'],['脱口秀','🎤'],
+  ['海洋馆','🐬'],['做手工','🎨'],['清吧','🍸'],
+  ['KTV','🎵'],['游乐园','🎢'],['网吧','🖥️'],
+  ['看电影','🎬'],['金钟湖看日落','🌅'],['滑雪','⛷️'],
+  ['攀岩','🧗'],['羽毛球','🏸'],['网球','🎾'],
+  ['骑车','🚴'],['麦理浩径徒步','🥾'],['其他','✍️']   // 点“其他”可以自己填
 ];
 
 /* ===================== Screen 5 — 美食 ===================== */
@@ -631,11 +706,73 @@ function buildGrid(container, items, onPick){
   });
 }
 
+/* ---------- Screen 4：活动多选 ---------- */
+const activityChips   = document.getElementById('activityChips');
+const activityHint    = document.getElementById('activityHint');
+const confirmActivityBtn = document.getElementById('confirmActivityBtn');
+const activityEls = new Map();                     // 活动名 → 卡片元素（自己填的没有卡片）
+
+function refreshActivity(){
+  const n = state.selectedActivities.length;
+  confirmActivityBtn.classList.toggle('is-disabled', n === 0);
+  activityHint.textContent = n === 0 ? '还没选哦～' : '已经选了 ' + n + ' 个';
+
+  // 卡片高亮跟着状态走
+  activityEls.forEach(function(el, name){
+    el.classList.toggle('is-picked', state.selectedActivities.indexOf(name) !== -1);
+  });
+
+  // 自己填的活动没有对应卡片，用标签显示，可单独删
+  activityChips.textContent = '';
+  state.selectedActivities.forEach(function(name){
+    if (activityEls.has(name)) return;
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    const label = document.createElement('span');
+    label.textContent = name;
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.textContent = '×';
+    del.setAttribute('aria-label', '删掉 ' + name);
+    del.addEventListener('click', function(){ toggleActivity(name, false); });
+    chip.appendChild(label);
+    chip.appendChild(del);
+    activityChips.appendChild(chip);
+  });
+}
+
+function toggleActivity(name, force){
+  const i = state.selectedActivities.indexOf(name);
+  const want = (force === undefined) ? (i === -1) : force;
+  if (want && i === -1) state.selectedActivities.push(name);
+  if (!want && i !== -1) state.selectedActivities.splice(i, 1);
+  refreshActivity();
+}
+
 buildGrid(document.getElementById('activityGrid'), ACTIVITIES, function(text, el){
-  if (text === '其他'){ openCustomModal(el); return; }   // “其他”改为自己填
-  state.selectedActivity = text;
+  if (text === '其他'){                            // “其他”：自己填，可以填很多次
+    el.classList.remove('is-picked');
+    openCustomModal(null);
+    return;
+  }
+  toggleActivity(text);
+});
+
+// 记下每张卡片，方便同步高亮（“其他”那张不算选项）
+document.querySelectorAll('#activityGrid .opt').forEach(function(el){
+  const name = el.querySelector('.text').textContent;
+  if (name !== '其他') activityEls.set(name, el);
+});
+
+confirmActivityBtn.addEventListener('click', function(){
+  if (state.selectedActivities.length === 0){
+    alert('至少挑一个感兴趣的活动嘛～ 🥺');
+    return;
+  }
   goTo('screen5');
 });
+
+refreshActivity();
 
 /* ---------- 活动页“其他”：自己填 ---------- */
 const customModal  = document.getElementById('customModal');
@@ -658,11 +795,10 @@ function closeCustomModal(){
 function submitCustomActivity(){
   const v = customInput.value.trim();
   if (!v){ customInput.focus(); return; }        // 空的就不放行
-  state.selectedActivity = v;
+  toggleActivity(v, true);                       // 加进已选，不直接跳页
   customModal.classList.remove('show');
   if (customPickedEl) customPickedEl.classList.remove('is-picked');
   customPickedEl = null;
-  goTo('screen5');
 }
 
 document.getElementById('customOk').addEventListener('click', submitCustomActivity);
@@ -699,11 +835,11 @@ function reportResult(){
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        date: state.selectedDate,
+        dates: state.selectedDates,           // 可能有好几天
         time: state.selectedTime,
-        activity: state.selectedActivity,
+        activities: state.selectedActivities, // 可能有好几个
         food: state.selectedFood,
-        dodges: state.noButtonClicks      // 她躲了几次“不要”，纯属好玩
+        dodges: state.noButtonClicks          // 她躲了几次“不要”，纯属好玩
       }),
       keepalive: true                     // 她马上关页面也尽量发得出去
     }).catch(function(){ /* 静默失败 */ });
@@ -711,13 +847,14 @@ function reportResult(){
 }
 
 function renderFinal(){
-  const d = formatDate(state.selectedDate);
+  const d = state.selectedDates.map(formatDate).join('、');
   const t = state.selectedTime || '';
-  const a = state.selectedActivity || '';
+  const a = state.selectedActivities.join('、');
   const f = state.selectedFood || '';
   document.getElementById('finalLine').textContent =
     d + ' ' + t + '，我们先去' + a + '，再去吃' + f + '。带好胃口，我带好路线。';
   document.getElementById('sumDate').textContent = d;
+  document.getElementById('sumTopRow').classList.toggle('stack', state.selectedDates.length > 1);
   document.getElementById('sumTime').textContent = t;
   document.getElementById('sumActivity').textContent = a;
   document.getElementById('sumFood').textContent = f;
