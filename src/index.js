@@ -19,6 +19,18 @@ const json = (data, status = 200) =>
 const clean = (v, max = 40) =>
   typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null;
 
+// 多选字段：接受数组，也接受单个字符串（旧版前端）。去空、去重、限制条数
+const cleanList = (v, max = 40, maxItems = 20) => {
+  const arr = Array.isArray(v) ? v : (v == null ? [] : [v]);
+  const out = [];
+  for (const item of arr) {
+    const c = clean(item, max);
+    if (c && !out.includes(c)) out.push(c);
+    if (out.length >= maxItems) break;
+  }
+  return out;
+};
+
 // 定长比较，避免用 === 比较密码时的时序差异
 function keyMatches(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
@@ -38,17 +50,21 @@ async function handleSubmit(request, env) {
     return json({ ok: false, error: '请求格式不对' }, 400);
   }
 
+  // 日期和活动现在可以多选，同时兼容旧版前端的单个写法
+  const dates = cleanList(body.dates ?? body.date, 10, 20);
+  const activities = cleanList(body.activities ?? body.activity, 20, 20);
+
   const record = {
-    date: clean(body.date, 10),          // "2026-07-12"
+    dates,                               // ["2026-09-13","2026-09-20"]
     time: clean(body.time, 5),           // "17:00"
-    activity: clean(body.activity, 20),  // 可能是她自己填的
+    activities,                          // ["猫咖","滑雪"]，可能含她自己填的
     food: clean(body.food, 20),
     dodges: Number.isFinite(body.dodges) ? Math.min(Math.max(0, body.dodges | 0), 9999) : null,
     at: new Date().toISOString(),
     country: request.headers.get('cf-ipcountry') || null,
   };
 
-  if (!record.date && !record.time && !record.activity && !record.food) {
+  if (!dates.length && !record.time && !activities.length && !record.food) {
     return json({ ok: false, error: '空内容' }, 400);
   }
 
