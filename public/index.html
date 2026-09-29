@@ -466,12 +466,12 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
       <div class="hearts"><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span></div>
     </section>
 
-    <!-- 自填活动弹窗：点活动页的“其他 ✍️”时弹出 -->
+    <!-- 自填弹窗：活动页、美食页的“其他 ✍️”共用，标题和提示由 JS 按场景换 -->
     <div class="modal" id="customModal">
       <div class="modal-box">
-        <h2>你想去哪儿呀？✍️</h2>
-        <label class="label" for="customActivity" style="text-align:center;">自己写一个吧～</label>
-        <input type="text" id="customActivity" maxlength="12" placeholder="比如：看展览" autocomplete="off">
+        <h2 id="customTitle">你想去哪儿呀？✍️</h2>
+        <label class="label" for="customText" style="text-align:center;">自己写一个吧～</label>
+        <input type="text" id="customText" maxlength="12" placeholder="比如：看展览" autocomplete="off">
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="customCancel">再想想</button>
           <button type="button" class="btn btn-primary" id="customOk">就这个 ❤️</button>
@@ -753,7 +753,11 @@ function toggleActivity(name, force){
 buildGrid(document.getElementById('activityGrid'), ACTIVITIES, function(text, el){
   if (text === '其他'){                            // “其他”：自己填，可以填很多次
     el.classList.remove('is-picked');
-    openCustomModal(null);
+    openCustomModal({
+      title: '你想去哪儿呀？✍️',
+      placeholder: '比如：看展览',
+      onSubmit: function(v){ toggleActivity(v, true); }   // 加进已选，不跳页
+    });
     return;
   }
   toggleActivity(text);
@@ -775,13 +779,19 @@ confirmActivityBtn.addEventListener('click', function(){
 
 refreshActivity();
 
-/* ---------- 活动页“其他”：自己填 ---------- */
+/* ---------- “其他”：自己填（活动页、美食页共用） ---------- */
 const customModal  = document.getElementById('customModal');
-const customInput  = document.getElementById('customActivity');
+const customTitle  = document.getElementById('customTitle');
+const customInput  = document.getElementById('customText');
 let customPickedEl = null;
+let customOnSubmit = null;
 
-function openCustomModal(el){
-  customPickedEl = el || null;
+// opts: { title, placeholder, onSubmit(text), el }
+function openCustomModal(opts){
+  customPickedEl = opts.el || null;
+  customOnSubmit = opts.onSubmit;
+  customTitle.textContent = opts.title;
+  customInput.placeholder = opts.placeholder;
   customInput.value = '';
   customModal.classList.add('show');
   customInput.focus();
@@ -791,31 +801,44 @@ function closeCustomModal(){
   customModal.classList.remove('show');
   if (customPickedEl) customPickedEl.classList.remove('is-picked');  // 取消时还原卡片颜色
   customPickedEl = null;
+  customOnSubmit = null;
 }
 
-function submitCustomActivity(){
+function submitCustom(){
   const v = customInput.value.trim();
   if (!v){ customInput.focus(); return; }        // 空的就不放行
-  toggleActivity(v, true);                       // 加进已选，不直接跳页
-  customModal.classList.remove('show');
-  if (customPickedEl) customPickedEl.classList.remove('is-picked');
-  customPickedEl = null;
+  const done = customOnSubmit;
+  closeCustomModal();
+  if (done) done(v);
 }
 
-document.getElementById('customOk').addEventListener('click', submitCustomActivity);
+document.getElementById('customOk').addEventListener('click', submitCustom);
 document.getElementById('customCancel').addEventListener('click', closeCustomModal);
 customInput.addEventListener('keydown', function(e){
-  if (e.key === 'Enter'){ e.preventDefault(); submitCustomActivity(); }
+  if (e.key === 'Enter'){ e.preventDefault(); submitCustom(); }
   if (e.key === 'Escape'){ closeCustomModal(); }
 });
 customModal.addEventListener('click', function(e){
   if (e.target === customModal) closeCustomModal();   // 点弹窗外围关闭
 });
 
-buildGrid(document.getElementById('foodGrid'), FOODS, function(text){
-  state.selectedFood = text;
+function pickFood(name){
+  state.selectedFood = name;
   renderFinal();
   goTo('screen6');
+}
+
+buildGrid(document.getElementById('foodGrid'), FOODS, function(text, el){
+  if (text === '其他'){                            // “其他”：自己填，填完直接去确认页
+    openCustomModal({
+      el: el,
+      title: '想吃什么呀？✍️',
+      placeholder: '比如：椰子鸡',
+      onSubmit: pickFood
+    });
+    return;
+  }
+  pickFood(text);
 });
 
 /* ===================== Screen 6 — 确认页 ===================== */
