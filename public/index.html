@@ -71,7 +71,10 @@ body{
 }
 .title--flowers{
   display:flex;align-items:center;justify-content:center;gap:8px;
+  /* 第一页标题：窄屏自动缩小，保证一行排完（最大 28px） */
+  font-size:clamp(22px, calc((100vw - 190px) / 13.5), 28px);
 }
+.title--flowers .flower-big{font-size:0.9em;}   /* 两朵花跟着标题一起缩放 */
 .title--flowers .title-text{flex:0 1 auto;}
 .title--solo{margin-bottom:28px;}   /* 标题下面没有副标题时用，补回间距 */
 .subtitle{
@@ -351,8 +354,8 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
   .stage{padding:34px 16px;border-radius:32px;}
   .card{padding:24px 18px;}
   .title{font-size:24px;}
-  .title--flowers{font-size:22px;gap:6px;}
-  .flower-big{font-size:22px;}
+  /* 第一页标题：字号随屏宽缩放，320–430px 的手机都排成一行（最大 22px） */
+  .title--flowers{font-size:clamp(15px, calc((100vw - 110px) / 13.5), 22px);gap:5px;}
   .subtitle{font-size:14px;}
   .btn{font-size:15px;padding:13px 20px;}
   .no-placeholder{font-size:15px;padding:13px 20px;}
