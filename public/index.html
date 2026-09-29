@@ -71,8 +71,12 @@ body{
 }
 .title--flowers{
   display:flex;align-items:center;justify-content:center;gap:8px;
+  /* 第一页标题：窄屏自动缩小，保证一行排完（最大 28px） */
+  font-size:clamp(22px, calc((100vw - 190px) / 13.5), 28px);
 }
+.title--flowers .flower-big{font-size:0.9em;}   /* 两朵花跟着标题一起缩放 */
 .title--flowers .title-text{flex:0 1 auto;}
+.title--solo{margin-bottom:28px;}   /* 标题下面没有副标题时用，补回间距 */
 .subtitle{
   font-size:15px;
   line-height:1.6;
@@ -333,6 +337,10 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
 .box .k{font-size:12px;font-weight:800;color:var(--pink);text-transform:uppercase;letter-spacing:.06em;}
 .box .v{font-size:16px;font-weight:800;margin-top:4px;}
 .box--half{flex:0 0 calc(50% - 5px);}
+/* 汇总下方的提示：请她截图发回来 */
+.final-note{margin:18px 0 0;text-align:center;line-height:1.6;}
+.final-note .sweet{display:block;font-size:16px;font-weight:800;color:var(--black);}
+.final-note .tease{display:block;font-size:14px;color:var(--gray);margin-top:2px;}
 .hearts{margin-top:16px;display:flex;justify-content:center;gap:12px;font-size:16px;}
 .hearts span{animation:float 3s ease-in-out infinite;}
 .hearts span:nth-child(2){animation-delay:.3s;}
@@ -346,8 +354,8 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
   .stage{padding:34px 16px;border-radius:32px;}
   .card{padding:24px 18px;}
   .title{font-size:24px;}
-  .title--flowers{font-size:22px;gap:6px;}
-  .flower-big{font-size:22px;}
+  /* 第一页标题：字号随屏宽缩放，320–430px 的手机都排成一行（最大 22px） */
+  .title--flowers{font-size:clamp(15px, calc((100vw - 110px) / 13.5), 22px);gap:5px;}
   .subtitle{font-size:14px;}
   .btn{font-size:15px;padding:13px 20px;}
   .no-placeholder{font-size:15px;padding:13px 20px;}
@@ -380,8 +388,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
     <section class="screen active" id="screen1" style="min-height:360px;">
       <!-- 法斗犬头像占位图：替换此处 emoji 为 <img src="dog.jpg" alt="法斗"> 即可 -->
       <div class="sticker"><div class="sticker-inner"><span class="dog">🐶</span></div></div>
-      <h1 class="title title--flowers"><span class="flower-big">🌸</span><span class="title-text">可以和我一起约会嘛？！</span><span class="flower-big" style="animation-delay:1s">🌸</span></h1>
-      <p class="subtitle">系统检测到：对方已经紧张到开始写网页了。</p>
+      <h1 class="title title--flowers title--solo"><span class="flower-big">🌸</span><span class="title-text">可以和我一起约会嘛？！</span><span class="flower-big" style="animation-delay:1s">🌸</span></h1>
       <div class="btn-row">
         <button class="btn btn-primary" id="yesBtn">愿意 ❤️</button>
         <!-- “不要”按钮：首次躲避前在正常流中，之后转为 absolute 自由移动 -->
@@ -395,8 +402,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
     <!-- ==================== Screen 2 — 惊喜反应页 ==================== -->
     <section class="screen" id="screen2">
       <div class="sticker sticker--black"><div class="sticker-inner sticker-inner--red">🥜</div></div>
-      <h1 class="title">等下，你真的点了愿意？？😭</h1>
-      <p class="subtitle">我都已经准备好被你点“不要”了。</p>
+      <h1 class="title title--solo">等下，你真的点了愿意！？（激动）</h1>
       <div class="btn-row"><button class="btn btn-primary" id="okBtn">好啦好啦 →</button></div>
     </section>
 
@@ -441,7 +447,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
     <!-- ==================== Screen 5 — 美食选择页 ==================== -->
     <section class="screen" id="screen5">
       <h1 class="title">我们吃点什么？🍽️✨</h1>
-      <p class="subtitle">挑一个今天的约会氛围。</p>
+      <p class="subtitle">挑你想吃的小猪晚餐🐷</p>
       <div class="grid grid--food" id="foodGrid"></div>
     </section>
 
@@ -463,15 +469,19 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
           <div class="box box--half"><div class="k">Menu</div><div class="v" id="sumFood">—</div></div>
         </div>
       </div>
+      <p class="final-note">
+        <span class="sweet">谢谢你认真挑的每一项 ❤️</span>
+        <span class="tease">截图为证，然后发给我，不许反悔哦 😏</span>
+      </p>
       <div class="hearts"><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span><span>❤️</span></div>
     </section>
 
-    <!-- 自填活动弹窗：点活动页的“其他 ✍️”时弹出 -->
+    <!-- 自填弹窗：活动页、美食页的“其他 ✍️”共用，标题和提示由 JS 按场景换 -->
     <div class="modal" id="customModal">
       <div class="modal-box">
-        <h2>你想去哪儿呀？✍️</h2>
-        <label class="label" for="customActivity" style="text-align:center;">自己写一个吧～</label>
-        <input type="text" id="customActivity" maxlength="12" placeholder="比如：看展览" autocomplete="off">
+        <h2 id="customTitle">你想去哪儿呀？✍️</h2>
+        <label class="label" for="customText" style="text-align:center;">自己写一个吧～</label>
+        <input type="text" id="customText" maxlength="12" placeholder="比如：看展览" autocomplete="off">
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="customCancel">再想想</button>
           <button type="button" class="btn btn-primary" id="customOk">就这个 ❤️</button>
@@ -687,9 +697,10 @@ const ACTIVITIES = [
 /* ===================== Screen 5 — 美食 ===================== */
 const FOODS = [
   ['披萨','🍕'],['寿司','🍣'],['火锅','🍲'],
-  ['烤肉','🥩'],['早茶','🥟'],['拉面','🍜'],
-  ['麻辣烫','🌶️'],['小龙虾','🦞'],['烧烤','🍢'],
-  ['其他','✍️']
+  ['烤肉','🍖'],['拉面','🍜'],['麻辣烫','🌶️'],
+  ['小龙虾','🦞'],['烧烤','🍢'],['鸡煲','🍗'],
+  ['河鲜','🐟'],['海鲜','🦐'],['牛扒','🥩'],
+  ['Pho','🥣'],['其他','✍️']
 ];
 
 function buildGrid(container, items, onPick){
@@ -752,7 +763,11 @@ function toggleActivity(name, force){
 buildGrid(document.getElementById('activityGrid'), ACTIVITIES, function(text, el){
   if (text === '其他'){                            // “其他”：自己填，可以填很多次
     el.classList.remove('is-picked');
-    openCustomModal(null);
+    openCustomModal({
+      title: '你想去哪儿呀？✍️',
+      placeholder: '比如：看展览',
+      onSubmit: function(v){ toggleActivity(v, true); }   // 加进已选，不跳页
+    });
     return;
   }
   toggleActivity(text);
@@ -774,13 +789,19 @@ confirmActivityBtn.addEventListener('click', function(){
 
 refreshActivity();
 
-/* ---------- 活动页“其他”：自己填 ---------- */
+/* ---------- “其他”：自己填（活动页、美食页共用） ---------- */
 const customModal  = document.getElementById('customModal');
-const customInput  = document.getElementById('customActivity');
+const customTitle  = document.getElementById('customTitle');
+const customInput  = document.getElementById('customText');
 let customPickedEl = null;
+let customOnSubmit = null;
 
-function openCustomModal(el){
-  customPickedEl = el || null;
+// opts: { title, placeholder, onSubmit(text), el }
+function openCustomModal(opts){
+  customPickedEl = opts.el || null;
+  customOnSubmit = opts.onSubmit;
+  customTitle.textContent = opts.title;
+  customInput.placeholder = opts.placeholder;
   customInput.value = '';
   customModal.classList.add('show');
   customInput.focus();
@@ -790,31 +811,44 @@ function closeCustomModal(){
   customModal.classList.remove('show');
   if (customPickedEl) customPickedEl.classList.remove('is-picked');  // 取消时还原卡片颜色
   customPickedEl = null;
+  customOnSubmit = null;
 }
 
-function submitCustomActivity(){
+function submitCustom(){
   const v = customInput.value.trim();
   if (!v){ customInput.focus(); return; }        // 空的就不放行
-  toggleActivity(v, true);                       // 加进已选，不直接跳页
-  customModal.classList.remove('show');
-  if (customPickedEl) customPickedEl.classList.remove('is-picked');
-  customPickedEl = null;
+  const done = customOnSubmit;
+  closeCustomModal();
+  if (done) done(v);
 }
 
-document.getElementById('customOk').addEventListener('click', submitCustomActivity);
+document.getElementById('customOk').addEventListener('click', submitCustom);
 document.getElementById('customCancel').addEventListener('click', closeCustomModal);
 customInput.addEventListener('keydown', function(e){
-  if (e.key === 'Enter'){ e.preventDefault(); submitCustomActivity(); }
+  if (e.key === 'Enter'){ e.preventDefault(); submitCustom(); }
   if (e.key === 'Escape'){ closeCustomModal(); }
 });
 customModal.addEventListener('click', function(e){
   if (e.target === customModal) closeCustomModal();   // 点弹窗外围关闭
 });
 
-buildGrid(document.getElementById('foodGrid'), FOODS, function(text){
-  state.selectedFood = text;
+function pickFood(name){
+  state.selectedFood = name;
   renderFinal();
   goTo('screen6');
+}
+
+buildGrid(document.getElementById('foodGrid'), FOODS, function(text, el){
+  if (text === '其他'){                            // “其他”：自己填，填完直接去确认页
+    openCustomModal({
+      el: el,
+      title: '想吃什么呀？✍️',
+      placeholder: '比如：椰子鸡',
+      onSubmit: pickFood
+    });
+    return;
+  }
+  pickFood(text);
 });
 
 /* ===================== Screen 6 — 确认页 ===================== */
