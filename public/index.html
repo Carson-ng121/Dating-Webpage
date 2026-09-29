@@ -73,6 +73,7 @@ body{
   display:flex;align-items:center;justify-content:center;gap:8px;
 }
 .title--flowers .title-text{flex:0 1 auto;}
+.title--solo{margin-bottom:28px;}   /* 标题下面没有副标题时用，补回间距 */
 .subtitle{
   font-size:15px;
   line-height:1.6;
@@ -384,8 +385,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
     <section class="screen active" id="screen1" style="min-height:360px;">
       <!-- 法斗犬头像占位图：替换此处 emoji 为 <img src="dog.jpg" alt="法斗"> 即可 -->
       <div class="sticker"><div class="sticker-inner"><span class="dog">🐶</span></div></div>
-      <h1 class="title title--flowers"><span class="flower-big">🌸</span><span class="title-text">可以和我一起约会嘛？！</span><span class="flower-big" style="animation-delay:1s">🌸</span></h1>
-      <p class="subtitle">系统检测到：对方已经紧张到开始写网页了。</p>
+      <h1 class="title title--flowers title--solo"><span class="flower-big">🌸</span><span class="title-text">可以和我一起约会嘛？！</span><span class="flower-big" style="animation-delay:1s">🌸</span></h1>
       <div class="btn-row">
         <button class="btn btn-primary" id="yesBtn">愿意 ❤️</button>
         <!-- “不要”按钮：首次躲避前在正常流中，之后转为 absolute 自由移动 -->
@@ -399,8 +399,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
     <!-- ==================== Screen 2 — 惊喜反应页 ==================== -->
     <section class="screen" id="screen2">
       <div class="sticker sticker--black"><div class="sticker-inner sticker-inner--red">🥜</div></div>
-      <h1 class="title">等下，你真的点了愿意？？😭</h1>
-      <p class="subtitle">我都已经准备好被你点“不要”了。</p>
+      <h1 class="title title--solo">等下，你真的点了愿意！？（激动）</h1>
       <div class="btn-row"><button class="btn btn-primary" id="okBtn">好啦好啦 →</button></div>
     </section>
 
@@ -445,7 +444,7 @@ input:focus-visible,select:focus-visible,.opt:focus-visible{
     <!-- ==================== Screen 5 — 美食选择页 ==================== -->
     <section class="screen" id="screen5">
       <h1 class="title">我们吃点什么？🍽️✨</h1>
-      <p class="subtitle">挑一个今天的约会氛围。</p>
+      <p class="subtitle">挑你想吃的小猪晚餐🐷</p>
       <div class="grid grid--food" id="foodGrid"></div>
     </section>
 
@@ -695,10 +694,10 @@ const ACTIVITIES = [
 /* ===================== Screen 5 — 美食 ===================== */
 const FOODS = [
   ['披萨','🍕'],['寿司','🍣'],['火锅','🍲'],
-  ['烤肉','🍖'],['早茶','🥟'],['拉面','🍜'],
-  ['麻辣烫','🌶️'],['小龙虾','🦞'],['烧烤','🍢'],
-  ['鸡煲','🍗'],['河鲜','🐟'],['海鲜','🦐'],
-  ['牛扒','🥩'],['Pho','🥣'],['其他','✍️']
+  ['烤肉','🍖'],['拉面','🍜'],['麻辣烫','🌶️'],
+  ['小龙虾','🦞'],['烧烤','🍢'],['鸡煲','🍗'],
+  ['河鲜','🐟'],['海鲜','🦐'],['牛扒','🥩'],
+  ['Pho','🥣'],['其他','✍️']
 ];
 
 function buildGrid(container, items, onPick){
